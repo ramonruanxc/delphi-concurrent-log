@@ -1,0 +1,9 @@
+{
+  "name": "github.com/ramonruanxc/delphi-concurrent-log",
+  "description": "A thread-safe logging library for Delphi, with a portable core tested under Free Pascal in CI.",
+  "version": "1.0.0",
+  "homepage": "https://github.com/ramonruanxc/delphi-concurrent-log",
+  "mainsrc": "src",
+  "license": "MIT",
+  "dependencies": {}
+}

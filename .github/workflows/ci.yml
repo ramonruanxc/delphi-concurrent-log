@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test suite (Free Pascal, Linux)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Free Pascal
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fpc
+          fpc -iV
+
+      # The library has no platform or UI dependency, which is what makes this
+      # job possible: Delphi cannot be licensed on a hosted runner, and its
+      # Community Edition refuses command line compilation even locally.
+      - name: Build test suite
+        run: |
+          mkdir -p build/normal
+          fpc -Mdelphi -Fusrc -Futests -FUbuild/normal -obuild/Tests tests/Tests.dpr
+
+      - name: Run test suite
+        run: ./build/Tests
+
+      # A concurrency test that always passes proves nothing. Built with the
+      # lock compiled out (-dPROVE_RACE), the same suite must fail — if it
+      # somehow passes without the lock, the test is not exercising the race
+      # and the CI should go red.
+      #
+      # The race build MUST use its own unit output directory. FPC's dependency
+      # check does not treat a changed -d define as a reason to recompile, so
+      # sharing build/normal would silently reuse the locked units and make
+      # this check meaningless.
+      - name: Verify the concurrency test detects the race
+        run: |
+          mkdir -p build/race
+          fpc -Mdelphi -dPROVE_RACE -Fusrc -Futests -FUbuild/race -obuild/TestsRace tests/Tests.dpr
+          if ./build/TestsRace; then
+            echo "::error::Suite passed with the lock removed — the concurrency test is not detecting the race."
+            exit 1
+          else
+            echo "Confirmed: without the lock, the suite fails as expected."
+          fi
