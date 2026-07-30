@@ -16,6 +16,12 @@ program Tests;
 {$ENDIF}
 
 uses
+  { On Unix, FPC needs a thread driver pulled in before any unit that touches
+    threads, or TThread aborts with runtime error 232. It must come first, and
+    only applies to FPC/Unix — Delphi and FPC/Windows load threading directly. }
+  {$IF DEFINED(FPC) AND DEFINED(UNIX)}
+  cthreads,
+  {$IFEND}
   ConcurrentLog.Testing,
   ConcurrentLog.Tests;
 
