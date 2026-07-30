@@ -22,8 +22,13 @@ uses
   {$IF DEFINED(FPC) AND DEFINED(UNIX)}
   cthreads,
   {$IFEND}
-  ConcurrentLog.Testing,
-  ConcurrentLog.Tests;
+  { Every project unit is listed with its path, including the ones only reached
+    indirectly, so the project builds from a clone with nothing to configure. }
+  ConcurrentLog.Types in '../src/ConcurrentLog.Types.pas',
+  ConcurrentLog.Sinks in '../src/ConcurrentLog.Sinks.pas',
+  ConcurrentLog.Logger in '../src/ConcurrentLog.Logger.pas',
+  ConcurrentLog.Testing in 'ConcurrentLog.Testing.pas',
+  ConcurrentLog.Tests in 'ConcurrentLog.Tests.pas';
 
 var
   Runner: TTestRunner;

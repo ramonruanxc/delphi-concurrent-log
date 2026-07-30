@@ -24,9 +24,12 @@ uses
   cthreads,
   {$IFEND}
   {$IFDEF FPC}SysUtils, Classes{$ELSE}System.SysUtils, System.Classes{$ENDIF},
-  ConcurrentLog.Types,
-  ConcurrentLog.Sinks,
-  ConcurrentLog.Logger;
+  { Explicit paths so the project builds straight from a clone with no search
+    path to configure. Forward slashes on purpose: Delphi accepts them on
+    Windows and Free Pascal needs them on Linux. }
+  ConcurrentLog.Types in '../src/ConcurrentLog.Types.pas',
+  ConcurrentLog.Sinks in '../src/ConcurrentLog.Sinks.pas',
+  ConcurrentLog.Logger in '../src/ConcurrentLog.Logger.pas';
 
 type
   TWorker = class(TThread)

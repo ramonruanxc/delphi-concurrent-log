@@ -116,6 +116,16 @@ minimum.
 
 ---
 
+## Building from a clone
+
+Every `.dpr` lists its units with explicit `in '...'` paths, so **opening one in
+the Delphi IDE and pressing build works with nothing to configure** — no search
+path, no library path.
+
+Free Pascal resolves units from `-Fu` rather than from the `in` clause, so a
+manual FPC build needs the paths on the command line. Every example below
+includes them.
+
 ## Demo
 
 `demo/Demo.dpr` is a short console program: three threads logging at once
