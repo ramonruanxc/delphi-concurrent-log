@@ -116,6 +116,18 @@ minimum.
 
 ---
 
+## Demo
+
+`demo/Demo.dpr` is a short console program: three threads logging at once
+through a console sink and a file sink, with a level filter dropping the
+quietest line. Run it and the interleaved output stays intact.
+
+```
+fpc -Mdelphi -Fusrc -FUbuild demo/Demo.dpr -obuild/Demo && ./build/Demo
+```
+
+---
+
 ## Running the tests
 
 Free Pascal, which is what CI uses:
