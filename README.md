@@ -33,6 +33,14 @@ end;
 
 ---
 
+## Execution flow
+
+![Execution flow of delphi-concurrent-log](docs/images/architecture-flow.png)
+
+TLogger.Log acquires one lock, filters by level, builds an entry and writes to
+configured sinks serially before releasing the lock. Logging is synchronous;
+slow sinks hold up callers.
+
 ## Install
 
 With [Boss](https://github.com/HashLoad/boss):
