@@ -11,6 +11,46 @@ with no platform or UI dependency, so it compiles under both Delphi and Free
 Pascal — which is what lets the test suite, including the concurrency test,
 run in CI.
 
+## Quick start
+
+```
+git clone https://github.com/ramonruanxc/delphi-concurrent-log.git
+```
+
+(or download the ZIP from GitHub and extract it).
+
+- **Delphi XE7 or later:** open `demo/Demo.dpr` and press **F9**. Nothing to
+  configure: no search path, no defines, no project options. The console
+  window stays open until you press Enter.
+- **Free Pascal 3.2.2:** from the repository root, run
+
+  ```
+  fpc demo/Demo.dpr
+  ```
+
+  then `demo\Demo.exe` on Windows or `./demo/Demo` on Linux.
+
+Three threads log at once; the run ends with the path of the log file it
+wrote (next to the executable) and a single verdict line:
+
+```
+2026-09-23 13:18:45.178 [INFO ] (46884) starting three workers
+2026-09-23 13:18:45.179 [INFO ] (61636) importer: step 1 of 5
+...
+2026-09-23 13:18:45.260 [INFO ] (46884) all workers finished
+
+Log file: <clone>\demo\demo.log
+SUCCESS: 20 lines from 3 threads, none lost or torn, Debug line filtered out.
+```
+
+Compiler support, honestly stated: **Free Pascal 3.2.2 is verified in CI**
+(Linux) and locally (Windows, i386). **Delphi XE7 and later is the intended
+target but has not been compiled here**: Delphi cannot run on a hosted CI
+runner, and the Community Edition refuses command line builds. The Delphi
+code paths avoid anything newer than XE7.
+
+## Usage
+
 ```pascal
 uses
   ConcurrentLog.Types, ConcurrentLog.Sinks, ConcurrentLog.Logger;
@@ -49,8 +89,9 @@ With [Boss](https://github.com/HashLoad/boss):
 boss install github.com/ramonruanxc/delphi-concurrent-log
 ```
 
-Or add `src` to your project's search path. Requires Delphi 10.1 Berlin or
-later; the core also builds on Free Pascal 3.2 with `-Mdelphi`.
+Or add `src` to your project's search path. Targets Delphi XE7 or later
+(intended, not compiler-verified; see Quick start); the core also builds on
+Free Pascal 3.2.2, which CI verifies.
 
 ## Concepts
 
@@ -126,35 +167,47 @@ minimum.
 
 ## Building from a clone
 
-Every `.dpr` lists its units with explicit `in '...'` paths, so **opening one in
-the Delphi IDE and pressing build works with nothing to configure** — no search
-path, no library path.
+Every `.dpr` lists every unit it uses from this repository, directly or
+indirectly, with an explicit `in '...'` path relative to the `.dpr`, so
+**opening one in the Delphi IDE and pressing F9 works with nothing to
+configure** — no search path, no library path, no defines. Under the debugger
+the program waits for Enter before closing; run anywhere else, it never
+pauses.
 
-Free Pascal resolves units from `-Fu` rather than from the `in` clause, so a
-manual FPC build needs the paths on the command line. Every example below
-includes them.
+Free Pascal resolves `in` paths from the current directory rather than from
+the `.dpr`, so each `.dpr` also carries an FPC-only `{$UNITPATH ../src}`.
+That makes a plain `fpc demo/Demo.dpr` or `fpc tests/Tests.dpr` work from the
+repository root with no options. Compiled units (`.ppu`, `.o`) land next to
+their sources and are git-ignored.
 
 ## Demo
 
 `demo/Demo.dpr` is a short console program: three threads logging at once
 through a console sink and a file sink, with a level filter dropping the
-quietest line. Run it and the interleaved output stays intact.
+quietest line. Run it and the interleaved output stays intact. It then re-reads
+its log file (`demo.log`, next to the executable), checks that every expected
+line is there and whole, and prints `SUCCESS: ...` (exit code 0) or
+`FAILURE: ...` (exit code 1). It takes no arguments.
 
 ```
-fpc -Mdelphi -Fusrc -FUbuild demo/Demo.dpr -obuild/Demo && ./build/Demo
+fpc demo/Demo.dpr
+./demo/Demo            # demo\Demo.exe on Windows
 ```
 
 ---
 
 ## Running the tests
 
-Free Pascal, which is what CI uses:
+In Delphi, open `tests/Tests.dpr` and press F9. With Free Pascal, from the
+repository root:
 
 ```
-mkdir build
-fpc -Mdelphi -Fusrc -Futests -FUbuild -obuild/Tests tests/Tests.dpr
-./build/Tests
+fpc tests/Tests.dpr
+./tests/Tests          # tests\Tests.exe on Windows
 ```
+
+CI builds the same program with explicit `-Fu`/`-FU` options into `build/`;
+see `.github/workflows/ci.yml`.
 
 The runner exits non-zero if any assertion fails. It uses a small assertion
 runner rather than DUnitX, because the suite has to run under both compilers
@@ -167,9 +220,14 @@ A concurrency test that always passes proves nothing — it has to fail when the
 thing it tests is removed. This one does. Build it with the lock compiled out:
 
 ```
-fpc -Mdelphi -dPROVE_RACE -Fusrc -Futests -FUbuild -obuild/TestsRace tests/Tests.dpr
+mkdir -p build/race
+fpc -B -dPROVE_RACE -FUbuild/race -obuild/TestsRace tests/Tests.dpr
 ./build/TestsRace
 ```
+
+`-B` and the separate `build/race` directory matter: FPC does not treat a
+changed define as a reason to recompile, so without them the race build could
+silently reuse units compiled with the lock.
 
 Without the lock, eight threads calling `TList.Add` at once corrupt the backing
 array, and the run dies in a storm of access violations instead of reporting

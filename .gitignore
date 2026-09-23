@@ -9,6 +9,7 @@ bin/
 *.compiled
 *.identcache
 *.local
+*.dproj.local
 *.dsk
 *.map
 *.res
@@ -16,6 +17,11 @@ __history/
 __recovery/
 Win32/
 Win64/
+
+# Plain `fpc demo/Demo.dpr` / `fpc tests/Tests.dpr` outputs on Unix, and demo logs
+/demo/Demo
+/tests/Tests
+*.log
 
 # Boss
 modules/
