@@ -1,8 +1,8 @@
 {
   ConcurrentLog test runner.
 
-    Free Pascal   fpc -Mdelphi -Fu../src -Fu. Tests.dpr
-    Delphi        (add src and tests to the search path, build in the IDE)
+    Delphi XE7+   open this file in the IDE and press F9 - nothing to configure
+    Free Pascal   fpc tests/Tests.dpr    (from the repository root)
 
   Exits non-zero if any assertion fails. CI reads that.
 }
@@ -11,6 +11,10 @@ program Tests;
 {$IFDEF FPC}
   {$MODE DELPHI}
   {$H+}
+  { Free Pascal resolves the `in` paths below from the current directory; the
+    unit path is resolved from this file, so a plain `fpc tests/Tests.dpr`
+    from the repository root works too. }
+  {$UNITPATH ../src}
 {$ELSE}
   {$APPTYPE CONSOLE}
 {$ENDIF}
@@ -47,4 +51,15 @@ begin
   finally
     Runner.Free;
   end;
+
+  { Keeps the console window open when started from the Delphi IDE (F9).
+    DebugHook is only set under the debugger, so command line runs, CI and
+    Free Pascal never pause. }
+  {$IFNDEF FPC}
+  if DebugHook <> 0 then
+  begin
+    Write('Press Enter to exit...');
+    ReadLn;
+  end;
+  {$ENDIF}
 end.

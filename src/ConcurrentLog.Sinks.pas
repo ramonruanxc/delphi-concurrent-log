@@ -119,8 +119,20 @@ begin
 end;
 
 function TMemorySink.Snapshot: TArray<TLogEntry>;
+{$IFDEF FPC}
 begin
   Result := FEntries.ToArray;
 end;
+{$ELSE}
+var
+  I: Integer;
+begin
+  { A plain copy loop rather than TList<T>.ToArray, so the Delphi build relies
+    only on what every supported version (XE7 and later) certainly provides. }
+  SetLength(Result, FEntries.Count);
+  for I := 0 to FEntries.Count - 1 do
+    Result[I] := FEntries[I];
+end;
+{$ENDIF}
 
 end.
